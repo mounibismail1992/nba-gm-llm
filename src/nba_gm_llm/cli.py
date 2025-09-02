@@ -49,7 +49,15 @@ def fetch(
     elif source == "bbr":
         out_dir = RAW_DIR / "bbr"
         out_dir.mkdir(parents=True, exist_ok=True)
-        year = int(season)
+        # Allow special season labels for BBR
+        try:
+            year = int(season)
+        except ValueError:
+            from .scrapers.bbr import current_bbr_year
+            if season.lower() in {"auto", "latest", "current"}:
+                year = current_bbr_year()
+            else:
+                raise
         if "rosters" in what:
             rosters = bbr.fetch_all_rosters(year)
             for abbr, rows in rosters.items():

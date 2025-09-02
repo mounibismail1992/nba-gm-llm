@@ -4,11 +4,22 @@ from typing import List, Dict, Any
 import requests
 from bs4 import BeautifulSoup, Comment
 from ..config import DEFAULT_HEADERS
+from datetime import datetime
 
 
 TEAM_ABBRS = [
     "ATL","BOS","BRK","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL","MEM","MIA","MIL","MIN","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS","TOR","UTA","WAS"
 ]
+
+
+def current_bbr_year(now: datetime | None = None) -> int:
+    """Return the BBR year corresponding to the upcoming or current season.
+
+    Heuristic: if month >= 7 (July), use next calendar year; else use current year.
+    Example: Sept 2025 -> 2026; Jan 2025 -> 2025.
+    """
+    dt = now or datetime.utcnow()
+    return dt.year + 1 if dt.month >= 7 else dt.year
 
 
 def fetch_team_roster(team_abbr: str, year: int, session: requests.Session | None = None) -> List[Dict[str, Any]]:
