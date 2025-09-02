@@ -18,7 +18,10 @@ app = typer.Typer(help="NBA GM LLM — data fetch and corpus builder")
 def fetch(
     source: str = typer.Option(..., help="nba_api or bbr"),
     season: str = typer.Option("2024-25", help="Season label, e.g., 2024-25 (nba_api) or year 2025 for BBR"),
-    what: List[str] = typer.Option(..., help="Items to fetch: nba_api: players,teams,team_gamelogs; bbr: rosters,team_gamelogs (rosters only implemented)"),
+    what: List[str] = typer.Option(
+        ..., 
+        help="Items to fetch: nba_api: players,teams,team_gamelogs; bbr: rosters,team_gamelogs,salaries"
+    ),
 ):
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     if source == "nba_api":
@@ -52,6 +55,11 @@ def fetch(
             for abbr, rows in rosters.items():
                 write_jsonl(out_dir / f"roster_{year}_{abbr}.jsonl", rows)
             print(f"[green]Wrote rosters for {year}")
+        if "salaries" in what:
+            salaries = bbr.fetch_all_salaries(year)
+            for abbr, rows in salaries.items():
+                write_jsonl(out_dir / f"salaries_{year}_{abbr}.jsonl", rows)
+            print(f"[green]Wrote salaries for {year}")
         if "team_gamelogs" in what:
             print("[yellow]BBR team_gamelogs not yet implemented in scraper; skipping.")
     else:
@@ -69,4 +77,3 @@ def build_corpus_cmd(
 
 if __name__ == "__main__":
     app()
-

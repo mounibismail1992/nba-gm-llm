@@ -20,8 +20,8 @@ Quick Start
    - nba_api players/teams/game logs (example season 2024-25):
      `python -m nba_gm_llm.cli fetch --source nba_api --season 2024-25 --what players teams team_gamelogs`
 
-   - Basketball-Reference rosters + per-game team logs:
-     `python -m nba_gm_llm.cli fetch --source bbr --season 2025 --what rosters team_gamelogs`
+   - Basketball-Reference rosters + salaries + per-game team logs:
+     `python -m nba_gm_llm.cli fetch --source bbr --season 2025 --what rosters salaries team_gamelogs`
 
 3) Build corpus
    - Generate markdown summaries for teams and players:
@@ -46,6 +46,7 @@ Notes on Sources
 - Basketball-Reference
   - Public HTML; light, polite scraping only. Cache locally and avoid hammering.
   - Team page pattern: `https://www.basketball-reference.com/teams/<TEAM>/<YEAR>.html` (e.g., BOS/2025.html)
+  - Salaries table id: `salaries2` on the team page.
 
 Extending
 - Add adapters under `src/nba_gm_llm/sources/` or `src/nba_gm_llm/scrapers/`.
@@ -54,4 +55,3 @@ Extending
 Next (optional)
 - Build embeddings + vector store (Qdrant/Chroma) and a QA agent over the corpus.
 - Add salary cap/contract data (ensure ToS compliance; many sites restrict scraping).
-
