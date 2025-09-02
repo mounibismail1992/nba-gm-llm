@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Any
 from datetime import datetime
 
 # Ensure we can import the package from src/
@@ -18,6 +18,7 @@ def resolve_latest_bbr_year(now: datetime | None = None) -> int:
 
 
 def main() -> None:
+    task = os.getenv("TASK", "contracts").lower()
     team = os.getenv("TEAM", "BOS").upper()
     year_env = os.getenv("YEAR", "auto")
 
@@ -26,6 +27,28 @@ def main() -> None:
     else:
         year = int(year_env)
 
+    if task == "player_stats":
+        try:
+            from nba_gm_llm.sources import nba_api_client  # type: ignore
+        except ModuleNotFoundError:
+            print(
+                "Missing nba_api. Run: pip install -r requirements.txt\n"
+                "If using venv: PYTHONPATH=src .venv/bin/python main.py"
+            )
+            raise
+        stats_by_season: Dict[str, List[Dict[str, Any]]] = nba_api_client.fetch_active_players_stats_last_n_years(n=5)
+        seasons = sorted(stats_by_season.keys())[::-1]
+        latest = seasons[0]
+        sample = stats_by_season[latest][:5]
+        output = {
+            "seasons": seasons,
+            "counts": {s: len(stats_by_season[s]) for s in seasons},
+            "latest_sample": sample,
+        }
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+        return
+
+    # Default: contracts
     try:
         from nba_gm_llm.scrapers.bbr import fetch_team_contracts  # type: ignore
     except ModuleNotFoundError as e:

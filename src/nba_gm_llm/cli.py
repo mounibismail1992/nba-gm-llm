@@ -46,6 +46,11 @@ def fetch(
                     rows.append(r)
             write_jsonl(out_dir / f"team_gamelogs_{season}.jsonl", rows)
             print(f"[green]Wrote team logs for {season}")
+        if "player_stats" in what:
+            stats_by_season = nba_api_client.fetch_active_players_stats_last_n_years(n=5)
+            for seas, rows in stats_by_season.items():
+                write_jsonl(out_dir / f"player_stats_{seas}.jsonl", rows)
+            print(f"[green]Wrote player stats for seasons: {', '.join(stats_by_season.keys())}")
     elif source == "bbr":
         out_dir = RAW_DIR / "bbr"
         out_dir.mkdir(parents=True, exist_ok=True)
