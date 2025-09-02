@@ -18,14 +18,6 @@ def resolve_latest_bbr_year(now: datetime | None = None) -> int:
 
 
 def main() -> None:
-    try:
-        from nba_gm_llm.scrapers.bbr import fetch_team_salaries  # type: ignore
-    except ModuleNotFoundError as e:
-        print(
-            "Missing dependencies or src path. Try: 'pip install -r requirements.txt' and rerun.\n"
-            "If using a venv: 'PYTHONPATH=src .venv/bin/python main.py'"
-        )
-        raise
     team = os.getenv("TEAM", "BOS").upper()
     year_env = os.getenv("YEAR", "auto")
 
@@ -34,15 +26,35 @@ def main() -> None:
     else:
         year = int(year_env)
 
-    rows = fetch_team_salaries(team, year)
+    try:
+        from nba_gm_llm.scrapers.bbr import fetch_team_contracts  # type: ignore
+    except ModuleNotFoundError as e:
+        print(
+            "Missing dependencies or src path. Try: 'pip install -r requirements.txt' and rerun.\n"
+            "If using a venv: 'PYTHONPATH=src .venv/bin/python main.py'"
+        )
+        raise
 
-    # Build a simple dictionary: player -> pretty salary text (fallback to "")
-    salaries: Dict[str, str] = {r["player"]: (r.get("salary_text") or "") for r in rows}
+    # Contracts page gives current season forward; ignore year mismatch and trust page
+    res = fetch_team_contracts(team)
+    players = res.get("players", [])
+
+    # Build dictionary: player -> {salary_text, years_remaining, status}
+    salaries: Dict[str, dict] = {
+        p["player"]: {
+            "salary": p.get("current_salary"),
+            "salary_text": p.get("current_salary_text") or "",
+            "years_remaining": p.get("years_remaining", 0),
+            "status": p.get("status", ""),
+        }
+        for p in players
+    }
 
     output = {
         "team": team,
-        "year": year,
-        "count": len(rows),
+        "year": res.get("base_year") or year,
+        "season": res.get("base_year_label"),
+        "count": len(players),
         "salaries": salaries,
     }
     print(json.dumps(output, indent=2, ensure_ascii=False))
